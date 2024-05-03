@@ -1,0 +1,4 @@
+github.com/coral/ddp v0.2.0 h1:wTyskl2sAJX+W7kQAdAONNpfAV4PyoYThOEGjReLKYE=
+github.com/coral/ddp v0.2.0/go.mod h1:/C4M49wZTSw+yo7flzpV8gXgwAuqrXhLbVTRONCjeqU=
+github.com/lucasb-eyer/go-colorful v1.2.0 h1:1nnpGOrhyZZuNyfu1QjKiUICQ74+3FNCN69Aj6K7nkY=
+github.com/lucasb-eyer/go-colorful v1.2.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
