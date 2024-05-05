@@ -1,6 +1,8 @@
 package effects
 
 import (
+	"ddp-sender/util"
+	"log"
 	"math"
 
 	"github.com/lucasb-eyer/go-colorful"
@@ -10,7 +12,7 @@ type Decay struct {
 	Range []int
 	Color colorful.Color
 	DecayOptions
-	status bool
+	util.DoneState
 }
 
 type DecayOptions struct {
@@ -31,34 +33,37 @@ func (d *Decay) NextValues() []colorful.Color {
 }
 
 func (d *Decay) setNextColor() {
-	if !d.status {
+	if d.IsDone() {
 		d.Color = colorful.Color{}
+		return
 	}
+
 	h, s, l := d.Color.HSLuv()
 	if l <= 0 {
 		d.Color = colorful.Color{}
-	} else {
-		l -= math.Pow(d.DecayCoef/255, 1/2.2)
-		if l < 0 {
-			l = 0
-		}
-		d.Color = colorful.HSLuv(h, s, l)
+		d.SetDone()
+		return
 	}
+	l -= math.Pow(d.DecayCoef/255, 1/2.2)
+	if l < 0 {
+		l = 0
+	}
+	d.Color = colorful.HSLuv(h, s, l)
 }
 
-func (d *Decay) IsDone() bool {
-	return d.Color.AlmostEqualRgb(colorful.Color{})
-}
+func (d *Decay) OffEvent(velocity uint8) {}
 
-func (d *Decay) OffEvent() {
-	d.status = false
+func (d *Decay) Retrigger(velocity uint8) bool {
+	return d.SetDone()
 }
 
 func NewDecay(ledRange []int, color colorful.Color, opts DecayOptions) *Decay {
+	if opts.DecayCoef <= 0 {
+		log.Printf("WARNING - Decay value is %f\n", opts.DecayCoef)
+	}
 	return &Decay{
 		Range:        ledRange,
 		Color:        color,
 		DecayOptions: opts,
-		status:       true,
 	}
 }
