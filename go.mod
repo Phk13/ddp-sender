@@ -1,6 +1,6 @@
 module ddp-sender
 
-go 1.21.4
+go 1.22
 
 require github.com/coral/ddp v0.2.0
 
