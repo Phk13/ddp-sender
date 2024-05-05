@@ -16,7 +16,7 @@ func colorCorrection(r, g, b uint8) (uint8, uint8, uint8) {
 	var floatR, floatG, floatB float64
 	floatR = float64(r)
 	if g > 15 {
-		floatG = float64(g) * 0.4
+		floatG = float64(g) * 0.43
 	} else if g > 5 {
 		floatG = float64(g) * 0.6
 	} else {

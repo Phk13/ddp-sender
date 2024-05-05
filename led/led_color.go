@@ -31,13 +31,19 @@ func (a *LEDArrayColor) SetNextEffectValues() {
 	var doneEffects []int
 
 	a.effectsMutex.RLock()
+	// Reset array
+	colorArray := make([]colorful.Color, len(a.leds))
 	for id, effect := range a.effects {
 		// Get the next values for the effect range.
 		nextValues := effect.NextValues()
 
 		// Apply the next values to the LEDs.
 		for i, ledNumber := range effect.GetRange() {
-			a.leds[ledNumber].color = nextValues[i]
+			next := nextValues[i]
+			if !next.AlmostEqualRgb(colorful.Color{}) {
+				// Only modify the color if it is black.
+				colorArray[ledNumber] = next
+			}
 		}
 
 		// Check if the effect is finished to delete it later.
@@ -46,6 +52,12 @@ func (a *LEDArrayColor) SetNextEffectValues() {
 		}
 	}
 	a.effectsMutex.RUnlock()
+
+	for i := range a.leds {
+		a.leds[i].Lock()
+		a.leds[i].color = colorArray[i]
+		a.leds[i].Unlock()
+	}
 
 	// Remove all the effects that have finished.
 	if len(doneEffects) > 0 {
@@ -86,14 +98,9 @@ func (a *LEDArrayColor) SetLEDs(first, last int, on bool, red, green, blue uint8
 }
 
 func (a *LEDArrayColor) SetLEDsEffect(effect effects.Effect) {
-	// start := time.Now()
 	a.effectsMutex.Lock()
 	defer a.effectsMutex.Unlock()
 	a.effects = append(a.effects, effect)
-	// for _, led := range a.LEDs[first:last] {
-	// 	led.SetEffect(colorful.Color{R: float64(red) / 255, G: float64(green) / 255, B: float64(blue) / 255}, effect)
-	// }
-	// log.Printf("[M]Set LEDs %d - %d effect (%v) -> %s", first, last, effect, time.Since(start))
 }
 
 func NewLEDArrayColor(amount int) *LEDArrayColor {
@@ -111,45 +118,19 @@ func NewLEDArrayColor(amount int) *LEDArrayColor {
 type LEDColor struct {
 	sync.RWMutex // TODO: Maybe can remove
 	color        colorful.Color
-	// effect effects.Effect
 }
 
 func (l *LEDColor) Get() []byte {
 	l.RLock()
 	defer l.RUnlock()
 
-	r, g, b := colorCorrection(l.color.Clamped().RGB255())
+	r, g, b := colorCorrection(l.color.RGB255())
 
-	return []byte{byte(r), byte(g), byte(b)}
+	return []byte{r, g, b}
 }
 
 func (l *LEDColor) Set(color colorful.Color) {
 	l.Lock()
 	defer l.Unlock()
-	// if l.effect != nil {
-	// 	// If an effect is active this method should not be called.
-	// 	return
-	// }
 	l.color = color
 }
-
-// func (l *LEDColor) SetNextEffectValue() {
-// 	if l.effect == nil {
-// 		return
-// 	}
-// 	l.Lock()
-// 	defer l.Unlock()
-// 	var finished bool
-// 	l.color, finished = l.effect.NextValues(l.color)
-// 	if finished {
-// 		// If the effect is done, remove it to avoid ticking through its logic.
-// 		l.effect = nil
-// 	}
-// }
-
-// func (l *LEDColor) SetEffect(color colorful.Color, effect effects.Effect) {
-// 	l.Lock()
-// 	defer l.Unlock()
-// 	l.effect = effect
-// 	l.color = color
-// }
