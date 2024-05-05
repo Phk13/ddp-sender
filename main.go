@@ -30,7 +30,7 @@ func main() {
 	go updater.Run()
 
 	// Run LED ticker (dynamic effects)
-	go updater.Ticker()
+	go updater.Ticker(config.LED_REFRESH_RATE)
 
 	// DDP Sender
 	go func() {
