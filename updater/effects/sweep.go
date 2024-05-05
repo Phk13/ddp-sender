@@ -1,6 +1,7 @@
 package effects
 
 import (
+	"ddp-sender/util"
 	"math"
 
 	"github.com/lucasb-eyer/go-colorful"
@@ -11,15 +12,15 @@ type Sweep struct {
 	Color colorful.Color
 	SweepOptions
 	currentStep float64
-	done        bool
+	util.DoneState
 	rangeLength int
 }
 
 type SweepOptions struct {
-	Speed       float64
-	Bleed       float64
-	BleedBefore bool
-	BleedAfter  bool
+	Speed       float64 `json:"speed"`
+	Bleed       float64 `json:"bleed"`
+	BleedBefore bool    `json:"bleed_before"`
+	BleedAfter  bool    `json:"bleed_after"`
 }
 
 func (s *Sweep) GetRange() []int {
@@ -48,7 +49,7 @@ func (s *Sweep) NextValues() []colorful.Color {
 			if lightness < 0.0065 {
 				// Determine if effect is finished if the last LED is off and currentStep is higher than that.
 				if i == s.rangeLength-1 && intStep > s.rangeLength {
-					s.done = true
+					s.SetDone()
 				}
 				lightness = 0
 			} else if lightness > l {
@@ -60,11 +61,11 @@ func (s *Sweep) NextValues() []colorful.Color {
 	return values
 }
 
-func (s *Sweep) IsDone() bool {
-	return s.done
-}
+func (s *Sweep) OffEvent(velocity uint8) {}
 
-func (s *Sweep) OffEvent() {}
+func (s *Sweep) Retrigger(velocity uint8) bool {
+	return true
+}
 
 func NewSweep(ledRange []int, color colorful.Color, opts SweepOptions) *Sweep {
 	return &Sweep{

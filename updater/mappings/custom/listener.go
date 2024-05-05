@@ -46,6 +46,7 @@ func (c *CustomMapper) ParseMapping(w http.ResponseWriter, req *http.Request) {
 			log.Println(err)
 			return
 		}
+		log.Println(preset.Effect)
 		c.Mappings[preset.Note] = Mapping{
 			Range:   ledRange,
 			Color:   color,
@@ -53,7 +54,7 @@ func (c *CustomMapper) ParseMapping(w http.ResponseWriter, req *http.Request) {
 			Options: preset.Options,
 		}
 	}
-
+	log.Printf("Received new custom mapping with %d presets.\n", len(c.Mappings))
 	w.WriteHeader(200)
 }
 

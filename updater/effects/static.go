@@ -1,13 +1,15 @@
 package effects
 
 import (
+	"ddp-sender/util"
+
 	"github.com/lucasb-eyer/go-colorful"
 )
 
 type Static struct {
-	Range  []int
-	Color  colorful.Color
-	status bool
+	Range []int
+	Color colorful.Color
+	util.DoneState
 }
 
 func (s *Static) GetRange() []int {
@@ -17,10 +19,10 @@ func (s *Static) GetRange() []int {
 func (s *Static) NextValues() []colorful.Color {
 	values := make([]colorful.Color, len(s.Range))
 	var color colorful.Color
-	if s.status {
-		color = s.Color
+	if s.IsDone() {
+		return values
 	} else {
-		color = colorful.Color{}
+		color = s.Color
 	}
 	for i := range s.Range {
 		values[i] = color
@@ -28,18 +30,17 @@ func (s *Static) NextValues() []colorful.Color {
 	return values
 }
 
-func (s *Static) IsDone() bool {
-	return s.Color.AlmostEqualRgb(colorful.Color{})
+func (s *Static) OffEvent(velocity uint8) {
+	s.SetDone()
 }
 
-func (s *Static) OffEvent() {
-	s.status = false
+func (s *Static) Retrigger(velocity uint8) bool {
+	return s.SetDone()
 }
 
 func NewStatic(ledRange []int, color colorful.Color) *Static {
 	return &Static{
-		Range:  ledRange,
-		Color:  color,
-		status: true,
+		Range: ledRange,
+		Color: color,
 	}
 }
