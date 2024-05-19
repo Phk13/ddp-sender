@@ -38,9 +38,9 @@ func (s *Static) Retrigger(velocity uint8) bool {
 	return s.SetDone()
 }
 
-func NewStatic(ledRange []int, color colorful.Color) *Static {
+func NewStatic(ledRange []int, color colorful.Color, velocity uint8) *Static {
 	return &Static{
 		Range: ledRange,
-		Color: color,
+		Color: adjustColorToVelocity(color, velocity),
 	}
 }

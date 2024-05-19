@@ -5,7 +5,9 @@ import (
 )
 
 type LEDArray interface {
+	// Get LED array as bytes
 	GetArray() []byte
+	// Called by ticker to update each running effect
 	SetNextEffectValues()
 	SetLED(ledNumber int, on bool, red, green, blue uint8)
 	SetLEDs(first, last int, on bool, red, green, blue uint8)

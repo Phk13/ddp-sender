@@ -36,6 +36,12 @@ func (c *CustomMapper) ParseMapping(w http.ResponseWriter, req *http.Request) {
 
 	c.Lock()
 	defer c.Unlock()
+	// Finish all effects from previous mapping.
+	for key, effect := range c.Effects {
+		effect.SetDone()
+		delete(c.Effects, key)
+	}
+	// Parse new mapping presets,
 	c.Mappings = make(map[uint8]Mapping)
 	for _, preset := range message.Presets {
 		ledRange := util.MakeRange(preset.First, preset.Last, preset.Step)

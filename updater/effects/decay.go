@@ -57,13 +57,13 @@ func (d *Decay) Retrigger(velocity uint8) bool {
 	return d.SetDone()
 }
 
-func NewDecay(ledRange []int, color colorful.Color, opts DecayOptions) *Decay {
+func NewDecay(ledRange []int, color colorful.Color, velocity uint8, opts DecayOptions) *Decay {
 	if opts.DecayCoef <= 0 {
 		log.Printf("WARNING - Decay value is %f\n", opts.DecayCoef)
 	}
 	return &Decay{
 		Range:        ledRange,
-		Color:        color,
+		Color:        adjustColorToVelocity(color, velocity),
 		DecayOptions: opts,
 	}
 }

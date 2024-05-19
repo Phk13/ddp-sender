@@ -12,7 +12,7 @@ import (
 )
 
 type CustomMapper struct {
-	sync.Mutex
+	sync.RWMutex
 	Mappings map[uint8]Mapping
 	Effects  map[uint8]effects.Effect
 }
@@ -25,6 +25,8 @@ type Mapping struct {
 }
 
 func (c *CustomMapper) MapMessage(array led.LEDArray, message listener.MidiMessage) {
+	c.RLock()
+	defer c.RUnlock()
 	if mapping, ok := c.Mappings[message.Note]; ok {
 		if message.On {
 			// If effect already exists for this preset, try to retrigger it.
@@ -53,14 +55,14 @@ func (c *CustomMapper) MapMessage(array led.LEDArray, message listener.MidiMessa
 func (m *Mapping) getNewEffect(velocity uint8) (effects.Effect, error) {
 	switch m.Effect {
 	case "static":
-		return effects.NewStatic(m.Range, m.Color), nil
+		return effects.NewStatic(m.Range, m.Color, velocity), nil
 	case "decay":
 		var options effects.DecayOptions
 		err := json.Unmarshal(m.Options, &options)
 		if err != nil {
 			return nil, err
 		}
-		return effects.NewDecay(m.Range, m.Color, options), nil
+		return effects.NewDecay(m.Range, m.Color, velocity, options), nil
 	case "sweep":
 		var options effects.SweepOptions
 		err := json.Unmarshal(m.Options, &options)
@@ -76,7 +78,7 @@ func (m *Mapping) getNewEffect(velocity uint8) (effects.Effect, error) {
 		}
 		return effects.NewSyncWalk(m.Range, m.Color, velocity, options), nil
 	default:
-		return effects.NewDecay(m.Range, m.Color, effects.DecayOptions{DecayCoef: 0.005}), nil
+		return effects.NewDecay(m.Range, m.Color, velocity, effects.DecayOptions{DecayCoef: 0.005}), nil
 	}
 }
 

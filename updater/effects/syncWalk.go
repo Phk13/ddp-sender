@@ -38,7 +38,9 @@ func (s *SyncWalk) NextValues() []colorful.Color {
 	l = math.Pow(float64(s.Velocity)/127.0, 2.2) * l
 	color := colorful.HSLuv(h, sat, l)
 	for i := range s.Amount {
-		values[s.currentStep+i] = color
+		if s.currentStep+i < len(s.Range) {
+			values[s.currentStep+i] = color
+		}
 	}
 	return values
 }

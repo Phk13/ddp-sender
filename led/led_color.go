@@ -41,8 +41,9 @@ func (a *LEDArrayColor) SetNextEffectValues() {
 		for i, ledNumber := range effect.GetRange() {
 			next := nextValues[i]
 			if !next.AlmostEqualRgb(colorful.Color{}) {
-				// Only modify the color if it is black.
+				// Only modify the color if it is not black.
 				colorArray[ledNumber] = next
+				// TODO: Priority based update (priority per effect)
 			}
 		}
 
