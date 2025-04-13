@@ -1,7 +1,6 @@
 package listener_test
 
 import (
-	"encoding/json"
 	"net"
 	"testing"
 	"time"
@@ -30,13 +29,12 @@ func TestUDPMidiReceiver_RunListener(t *testing.T) {
 	}()
 	time.Sleep(100 * time.Millisecond) // Wait to ensure the listener is set up before sending data.
 
-	message := listener.MidiMessage{
-		Note:     50,
-		Velocity: 127,
-		On:       true,
-		Channel:  1,
+	messageBytes := []byte{
+		50,  // Note
+		127, // Velocity
+		1,   // On (1 for on)
+		1,   // Channel
 	}
-	messageBytes, _ := json.Marshal(message)
 
 	_, err = conn.WriteToUDP(messageBytes, &net.UDPAddr{
 		IP:   net.IPv4(127, 0, 0, 1),
@@ -46,8 +44,15 @@ func TestUDPMidiReceiver_RunListener(t *testing.T) {
 		t.Fatalf("Failed to send message: %v", err)
 	}
 
+	expectedMessage := listener.MidiMessage{
+		Note:     50,
+		Velocity: 127,
+		On:       true,
+		Channel:  1,
+	}
+
 	receivedMessage := <-receiver.SendChannel
-	if receivedMessage != message {
+	if receivedMessage != expectedMessage {
 		t.Fatalf("Received message is not correct: %v", receivedMessage)
 	}
 }

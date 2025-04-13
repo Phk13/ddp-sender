@@ -1,8 +1,7 @@
 package listener
 
 import (
-	"bytes"
-	"encoding/json"
+	"fmt"
 	"log"
 	"net"
 )
@@ -13,15 +12,20 @@ type UDPMidiReceiver struct {
 }
 
 func (r UDPMidiReceiver) ReceiveMidi() error {
-	var buf [512]byte
+	// Buffer size is 4 bytes per message (Note, Velocity, On/Off, Channel)
+	var buf [4]byte
 	n, _, err := r.conn.ReadFromUDP(buf[0:])
 	if err != nil {
 		return err
 	}
-	var message MidiMessage
-	err = json.NewDecoder(bytes.NewReader(buf[:n])).Decode(&message)
-	if err != nil {
-		return err
+	if n != 4 {
+		return fmt.Errorf("unexpected message size: %d bytes", n)
+	}
+	message := MidiMessage{
+		Note:     buf[0],
+		Velocity: buf[1],
+		On:       buf[2] == 1,
+		Channel:  buf[3],
 	}
 	r.SendChannel <- message
 	return nil
