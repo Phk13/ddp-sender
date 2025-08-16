@@ -1,0 +1,51 @@
+{
+  "name": "Default Mapping",
+  "description": "Basic example mapping with common effects",
+  "presets": [
+    {
+      "note": 36,
+      "first": 1,
+      "last": 30,
+      "step": 1,
+      "color": "#ff0000",
+      "effect": "decay",
+      "options": {
+        "decay_coef": 0.01
+      }
+    },
+    {
+      "note": 38,
+      "first": 31,
+      "last": 60,
+      "step": 1,
+      "color": "#00ff00",
+      "effect": "static",
+      "options": {}
+    },
+    {
+      "note": 40,
+      "first": 61,
+      "last": 90,
+      "step": 1,
+      "color": "#0066ff",
+      "effect": "sweep",
+      "options": {
+        "speed": 1.0,
+        "bleed": 0.5,
+        "bleed_after": true,
+        "bleed_before": false
+      }
+    },
+    {
+      "note": 42,
+      "first": 91,
+      "last": 150,
+      "step": 1,
+      "color": "#ffff00",
+      "effect": "syncWalk",
+      "options": {
+        "amount": 2
+      }
+    }
+  ]
+}

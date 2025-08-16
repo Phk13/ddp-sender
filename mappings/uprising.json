@@ -1,0 +1,227 @@
+{
+  "name": "Uprising",
+  "presets": [
+    {
+      "name": "Orange SyncWalk Left",
+      "note": 30,
+      "first": 55,
+      "last": 75,
+      "step": 1,
+      "color": "#c55b00",
+      "effect": "syncWalk",
+      "options": {
+        "amount": 5
+      }
+    },
+    {
+      "name": "Orange SyncWalk Right",
+      "note": 31,
+      "first": 95,
+      "last": 75,
+      "step": -1,
+      "color": "#c55b00",
+      "effect": "syncWalk",
+      "options": {
+        "amount": 5
+      }
+    },
+    {
+      "name": "Blue SyncWalk Left",
+      "note": 32,
+      "first": 55,
+      "last": 75,
+      "step": 1,
+      "color": "#0091e7",
+      "effect": "syncWalk",
+      "options": {
+        "amount": 5
+      }
+    },
+    {
+      "name": "Blue SyncWalk Right",
+      "note": 33,
+      "first": 95,
+      "last": 75,
+      "step": -1,
+      "color": "#0091e7",
+      "effect": "syncWalk",
+      "options": {
+        "amount": 5
+      }
+    },
+    {
+      "name": "Blue Slow Sweep Left",
+      "note": 34,
+      "first": 25,
+      "last": 55,
+      "step": 1,
+      "color": "#0091e7",
+      "effect": "sweep",
+      "options": {
+        "speed": 0.5,
+        "bleed": 2,
+        "bleed_after": true
+      }
+    },
+    {
+      "name": "Blue Slow Sweep Right",
+      "note": 35,
+      "first": 125,
+      "last": 95,
+      "step": -1,
+      "color": "#0091e7",
+      "effect": "sweep",
+      "options": {
+        "speed": 0.5,
+        "bleed": 2,
+        "bleed_after": true
+      }
+    },
+    {
+      "name": "Orange Slow Sweep Left",
+      "note": 36,
+      "first": 25,
+      "last": 55,
+      "step": 1,
+      "color": "#c55b00",
+      "effect": "sweep",
+      "options": {
+        "speed": 0.5,
+        "bleed": 0.05,
+        "bleed_before": true,
+        "bleed_after": true
+      }
+    },
+    {
+      "name": "Orange Slow Sweep Right",
+      "note": 37,
+      "first": 125,
+      "last": 95,
+      "step": -1,
+      "color": "#c55b00",
+      "effect": "sweep",
+      "options": {
+        "speed": 0.5,
+        "bleed": 0.05,
+        "bleed_before": true,
+        "bleed_after": true
+      }
+    },
+    {
+      "name": "White Flash Decay (Crash Left)",
+      "note": 40,
+      "first": 1,
+      "last": 55,
+      "step": 1,
+      "color": "#ffffff",
+      "effect": "decay",
+      "options": {
+        "decay_coef": 0.15
+      }
+    },
+    {
+      "name": "White Flash Decay (Crash Right)",
+      "note": 41,
+      "first": 95,
+      "last": 149,
+      "step": 1,
+      "color": "#ffffff",
+      "effect": "decay",
+      "options": {
+        "decay_coef": 0.15
+      }
+    },
+    {
+      "name": "White Fast Sweep Left (Highlight Snare)",
+      "note": 42,
+      "first": 75,
+      "last": 30,
+      "step": -1,
+      "color": "#ffffff",
+      "effect": "sweep",
+      "options": {
+        "speed": 1.5,
+        "bleed": 0.05,
+        "bleed_after": true
+      }
+    },
+    {
+      "name": "White Fast Sweep Right (Highlight Snare)",
+      "note": 43,
+      "first": 75,
+      "last": 120,
+      "step": 1,
+      "color": "#ffffff",
+      "effect": "sweep",
+      "options": {
+        "speed": 1.5,
+        "bleed": 0.05,
+        "bleed_after": true
+      }
+    },
+    {
+      "name": "White Static Flash (Sector 1)",
+      "note": 44,
+      "first": 40,
+      "last": 50,
+      "step": 1,
+      "color": "#ffffff",
+      "effect": "static",
+      "options": {}
+    },
+    {
+      "name": "White Static Flash (Sector 2)",
+      "note": 45,
+      "first": 60,
+      "last": 70,
+      "step": 1,
+      "color": "#ffffff",
+      "effect": "static",
+      "options": {}
+    },
+    {
+      "name": "White Static Flash (Sector 3)",
+      "note": 46,
+      "first": 80,
+      "last": 90,
+      "step": 1,
+      "color": "#ffffff",
+      "effect": "static",
+      "options": {}
+    },
+    {
+      "name": "White Static Flash (Sector 4)",
+      "note": 47,
+      "first": 100,
+      "last": 110,
+      "step": 1,
+      "color": "#ffffff",
+      "effect": "static",
+      "options": {}
+    },
+    {
+      "name": "Orange Fast Decay (Toms Left)",
+      "note": 60,
+      "first": 35,
+      "last": 65,
+      "step": 1,
+      "color": "#c55b00",
+      "effect": "decay",
+      "options": {
+        "decay_coef": 0.15
+      }
+    },
+    {
+      "name": "Orange Fast Decay (Toms Right)",
+      "note": 61,
+      "first": 85,
+      "last": 115,
+      "step": 1,
+      "color": "#c55b00",
+      "effect": "decay",
+      "options": {
+        "decay_coef": 0.15
+      }
+    }
+  ]
+}
