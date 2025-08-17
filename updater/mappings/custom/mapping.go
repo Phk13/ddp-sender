@@ -7,6 +7,7 @@ import (
 	"ddp-sender/updater/effects"
 	"ddp-sender/util"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,12 +20,14 @@ type CustomMapper struct {
 	sync.RWMutex
 	Mappings map[uint8]Mapping
 	Effects  map[uint8]effects.Effect
+	ledArray led.LEDArray
 }
 
 type MappingFile struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	Presets     []struct {
+		Name    string          `json:"name"`
 		Note    uint8           `json:"note"`
 		First   int             `json:"first"`
 		Last    int             `json:"last"`
@@ -45,22 +48,9 @@ type Mapping struct {
 func (c *CustomMapper) MapMessage(array led.LEDArray, message listener.MidiMessage) {
 	c.RLock()
 	defer c.RUnlock()
-	if mapping, ok := c.Mappings[message.Note]; ok {
+	if _, ok := c.Mappings[message.Note]; ok {
 		if message.On {
-			// If effect already exists for this preset, try to retrigger it.
-			if currentEffect, ok := c.Effects[message.Note]; ok {
-				if !currentEffect.Retrigger(message.Velocity) {
-					// If retrigger returns false it is still ongoing and should not be replaced.
-					return
-				}
-			}
-			effect, err := mapping.getNewEffect(message.Velocity)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			array.SetLEDsEffect(effect)
-			c.Effects[message.Note] = effect
+			c.triggerEffectForNote(array, message.Note, message.Velocity)
 		} else {
 			if effect, ok := c.Effects[message.Note]; ok {
 				effect.OffEvent(message.Velocity)
@@ -68,6 +58,158 @@ func (c *CustomMapper) MapMessage(array led.LEDArray, message listener.MidiMessa
 		}
 
 	}
+}
+
+// TriggerPreset manually triggers a preset effect by MIDI note
+func (c *CustomMapper) TriggerPreset(note uint8, velocity uint8) error {
+	c.RLock()
+	defer c.RUnlock()
+
+	if _, ok := c.Mappings[note]; !ok {
+		return fmt.Errorf("no mapping found for note %d", note)
+	}
+
+	c.triggerEffectForNote(c.ledArray, note, velocity)
+	return nil
+}
+
+// TriggerPresetOff manually turns off a preset effect by MIDI note
+func (c *CustomMapper) TriggerPresetOff(note uint8, velocity uint8) error {
+	c.RLock()
+	defer c.RUnlock()
+
+	if _, ok := c.Mappings[note]; !ok {
+		return fmt.Errorf("no mapping found for note %d", note)
+	}
+
+	// Turn off the effect if it exists
+	if effect, ok := c.Effects[note]; ok {
+		effect.OffEvent(velocity)
+	}
+
+	return nil
+}
+
+// ClearAllEffects clears all currently active effects
+func (c *CustomMapper) ClearAllEffects() error {
+	c.Lock()
+	defer c.Unlock()
+
+	// Turn off all effects
+	for note, effect := range c.Effects {
+		effect.SetDone()
+		delete(c.Effects, note)
+	}
+
+	log.Printf("Cleared all active effects (%d effects stopped)", len(c.Effects))
+	return nil
+}
+
+// TriggerPreviewEffect triggers a temporary effect for preview without needing a saved mapping
+func (c *CustomMapper) TriggerPreviewEffect(first, last, step int, colorHex, effectType string, optionsJson json.RawMessage) error {
+	c.Lock()
+	defer c.Unlock()
+
+	// Create LED range
+	ledRange := util.MakeRange(first, last, step)
+
+	// Parse color
+	color, err := colorful.Hex(colorHex)
+	if err != nil {
+		return fmt.Errorf("invalid color format: %v", err)
+	}
+
+	// Create temporary mapping
+	tempMapping := Mapping{
+		Range:   ledRange,
+		Color:   color,
+		Effect:  effectType,
+		Options: optionsJson,
+	}
+
+	// Use special preview note (255 = preview)
+	const previewNote = 255
+
+	// If effect already exists for preview, try to retrigger it
+	if currentEffect, ok := c.Effects[previewNote]; ok {
+		if !currentEffect.Retrigger(127) {
+			// If retrigger returns false, effect is still ongoing and should not be replaced
+			log.Printf("Preview effect retriggered successfully")
+			return nil
+		}
+	}
+
+	// Create and trigger the effect with max velocity
+	effect, err := tempMapping.getNewEffect(127)
+	if err != nil {
+		return fmt.Errorf("failed to create effect: %v", err)
+	}
+
+	// Apply to LED array if available
+	if c.ledArray != nil {
+		c.ledArray.SetLEDsEffect(effect)
+	}
+
+	// Store the new effect
+	c.Effects[previewNote] = effect
+
+	log.Printf("Preview effect triggered: %s on range %d-%d with step %d", effectType, first, last, step)
+	return nil
+}
+
+// TriggerPreviewEffectOff turns off the current preview effect
+func (c *CustomMapper) TriggerPreviewEffectOff() error {
+	c.Lock()
+	defer c.Unlock()
+
+	// Turn off the preview effect if it exists
+	const previewNote = 255
+	if effect, ok := c.Effects[previewNote]; ok {
+		effect.OffEvent(0)
+	}
+
+	log.Printf("Preview effect turned off")
+	return nil
+}
+
+// ClearPreviewEffects clears all preview effects
+func (c *CustomMapper) ClearPreviewEffects() error {
+	c.Lock()
+	defer c.Unlock()
+
+	// Clear preview effect (note 255)
+	const previewNote = 255
+	if effect, ok := c.Effects[previewNote]; ok {
+		effect.SetDone()
+		delete(c.Effects, previewNote)
+		log.Printf("Preview effect cleared and removed")
+	} else {
+		log.Printf("No preview effect to clear")
+	}
+
+	return nil
+}
+
+// triggerEffectForNote is a helper method to trigger an effect for a specific note
+func (c *CustomMapper) triggerEffectForNote(array led.LEDArray, note uint8, velocity uint8) {
+	mapping := c.Mappings[note]
+
+	// If effect already exists for this preset, try to retrigger it.
+	if currentEffect, ok := c.Effects[note]; ok {
+		if !currentEffect.Retrigger(velocity) {
+			// If retrigger returns false it is still ongoing and should not be replaced.
+			return
+		}
+	}
+	effect, err := mapping.getNewEffect(velocity)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if array != nil {
+		array.SetLEDsEffect(effect)
+	}
+	c.Effects[note] = effect
 }
 
 func (m *Mapping) getNewEffect(velocity uint8) (effects.Effect, error) {
@@ -163,4 +305,11 @@ func NewCustomMapper() *CustomMapper {
 	}
 
 	return mapper
+}
+
+// SetLEDArray sets the LED array reference for manual triggering
+func (c *CustomMapper) SetLEDArray(array led.LEDArray) {
+	c.Lock()
+	defer c.Unlock()
+	c.ledArray = array
 }

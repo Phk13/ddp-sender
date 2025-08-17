@@ -1,0 +1,348 @@
+# LED Mapping System - Project Rules & Context
+
+## Project Overview
+This is a Go-based LED light show mapping system that:
+- Receives MIDI via UDP and drives LED strips using DDP protocol
+- Has a React web UI for visual mapping design and management
+- Supports multiple operation modes (direct, drums, custom mappings)
+- Is designed for live music performance with REAPER integration
+
+## Architecture
+```
+REAPER + midisender.py → UDP → ddp-sender (Go) → DDP → WLED ESP32 → LED Strip
+                                    ↓
+                            Web UI (React + Tailwind)
+```
+
+## Directory Structure
+```
+ddp-sender/
+├── main.go                 # Main application entry point
+├── config/                 # Configuration constants
+├── led/                    # LED array management
+├── listener/               # MIDI input (UDP/HTTP)
+├── updater/                # MIDI-to-LED mapping logic
+│   ├── effects/           # LED effect implementations
+│   └── mappings/          # Mapping strategies (drums, custom)
+├── webserver/             # Web UI server + embedded files
+│   ├── server.go         # HTTP server with API endpoints
+│   └── ui/               # React application
+│       ├── src/
+│       ├── package.json
+│       └── dist/         # Built files (embedded in Go binary)
+├── mappings/             # JSON mapping files
+├── build.sh              # Build script
+├── UI_DESIGN.md          # Comprehensive UI design documentation
+└── .rules               # This file
+```
+
+## Technology Stack
+- **Backend**: Go with embed for static files
+- **Frontend**: React 19 + React Router + Tailwind CSS + TypeScript
+- **Icons**: Lucide React
+- **Build**: Vite (frontend), Go build (backend), pnpm (package manager)
+- **LED Protocol**: DDP (Distributed Display Protocol)
+- **MIDI Input**: UDP on port 8090
+
+## Current Project Status
+
+### ✅ COMPLETED FEATURES
+
+#### UI/UX
+- **Navigation**: Sidebar with Lucide icons (Folder, Eye, Settings)
+- **System Status**: Live status bar with connection indicators
+- **Dark Theme**: Consistent dark theme across all components
+- **Responsive Design**: Mobile-first approach with Tailwind CSS
+- **Error Handling**: Comprehensive error boundaries and user feedback
+
+#### Mapping Manager
+- **Mapping Cards**: Grid layout with full mapping information
+- **Actions**: Activate (Zap), Edit (Edit3), Duplicate (Copy), Delete (Trash2)
+- **Search & Filter**: Real-time search functionality
+- **Empty States**: Helpful guidance for new users
+- **Status Indicators**: Clear visual feedback for active mappings
+
+#### Mapping Editor - Full-Featured Design Tool
+- **LED Strip Visualization**:
+  - 150 interactive LED elements with click-drag selection
+  - Real-time color-coded mapping display
+  - LED numbering markers and quick selection tools
+- **Preset List**:
+  - Compact design optimized for scrolling
+  - Clean effect type indicators (no emojis)
+- **Preset Editor**:
+  - Action bar moved to top for accessibility
+  - Save Changes button with proper icon and hover effects
+  - Comprehensive form validation with real-time feedback
+
+#### Effect System - Hardware-Accurate Simulation
+- **Effect Options**:
+  - **Static**: Simple on/off with clear explanation
+  - **Decay**: Coefficient control with curve visualization
+  - **Sweep**: Speed/bleed controls with backend-accurate simulation
+  - **SyncWalk**: Amount control with walking pattern preview
+- **Animation Reset**: All previews restart from 0 when parameters change
+- **Backend Parity**: Sweep simulation matches Go implementation exactly
+
+#### Preview System - Live Hardware Testing
+- **Manual Triggering**: Individual preset testing on hardware
+- **Effect Types**: Different interaction for static vs dynamic effects
+- **Quick Actions**: Clear all effects, refresh data
+- **Real-time Feedback**: Live LED visualization during testing
+
+#### LED Range Calculation - Backend Accuracy
+- **Exclusive Ranges**: Matches backend MakeRange logic exactly
+- **Negative Steps**: Proper handling of reverse ranges
+- **Zero LED Support**: Correctly handles LED 0 in calculations
+
+### 🎯 ARCHITECTURE DECISIONS
+
+#### Frontend Performance
+- **Bundle Optimization**: Tailwind purging, efficient imports
+- **React Optimization**: Proper memoization, key props
+- **Debounced Updates**: Form inputs debounced to prevent excessive re-renders
+- **Efficient Rendering**: LED strip optimized with CSS transforms
+
+#### API Integration
+- **Type Safety**: Complete TypeScript interfaces
+- **Error Handling**: Consistent error handling across all API calls
+- **Real-time Features**: Live system status monitoring
+- **Effect Testing**: Direct hardware integration for previews
+
+### 🔧 CURRENT API ENDPOINTS
+- `GET /api/status` - System status (current mapping, LED count)
+- `POST /api/switchMapping` - Switch active mapping file
+- `GET /api/mappings/{name}` - Load mapping file
+- `PUT /api/mappings/{name}` - Save mapping file
+- `POST /api/effects/trigger` - Trigger effect preview
+- `POST /api/effects/triggerOff` - Turn off effect
+- `POST /api/effects/clearAll` - Clear all active effects
+
+### 📊 NEXT PRIORITY: System Monitoring
+**Performance Dashboard** (Planned):
+- Real-time metrics (FPS, memory usage, effect count)
+- MIDI activity monitoring
+- Performance graphs and alerts
+- **Design Constraint**: Ultra-low overhead (< 0.1ms per frame impact)
+
+## Key Concepts
+
+### MIDI Channels & Modes
+- **Channel 1**: Direct LED mapping (note number = LED position)
+- **Channel 2**: Static drums mapping (hardcoded presets)
+- **Channel 3**: Custom dynamic mapping (JSON-based presets)
+
+### Mapping Files (JSON)
+Located in `./mappings/`, define MIDI note → LED effect mappings:
+```json
+{
+  "name": "Song Name",
+  "description": "Description",
+  "presets": [
+    {
+      "name": "Effect Name",
+      "note": 36,
+      "first": 1,
+      "last": 50,
+      "step": 1,
+      "color": "#ff0000",
+      "effect": "decay",
+      "options": { "decay_coef": 0.01 }
+    }
+  ]
+}
+```
+
+### Effect Types & Implementation
+- **static**: Simple on/off (no additional parameters)
+- **decay**: Fade out over time (options: decay_coef)
+- **sweep**: Moving wave with bleed (options: speed, bleed, bleed_before, bleed_after)
+- **syncWalk**: Walking pattern (options: amount)
+
+### LED Configuration
+- **Count**: 150 LEDs (configurable via LED_AMOUNT)
+- **Indexing**: Backend uses 0-based (LED 0-149)
+- **Range Logic**: Exclusive ranges - `MakeRange(1,5,1)` = [1,2,3,4] (4 LEDs)
+- **Layout**: Linear strip (future: 2D layouts possible)
+
+## Coding Standards
+
+### Go Code
+- Use standard Go formatting (gofmt)
+- Package names: lowercase, single word
+- Constants: UPPER_SNAKE_CASE
+- Private functions: camelCase
+- Public functions: PascalCase
+- Error handling: Always check and handle errors appropriately
+- Use structured logging where possible
+
+### React/TypeScript Code
+- Functional components with hooks (no class components)
+- Props destructuring in function parameters
+- Use descriptive component and prop names
+- Keep components small and focused (single responsibility)
+- Use callback props for parent communication
+- Handle loading and error states explicitly
+- Full TypeScript types for all props and state
+
+### CSS/Styling
+- Use Tailwind CSS utility classes exclusively
+- Custom CSS variables for theme colors (defined in index.css)
+- Responsive design
+- Dark theme only (no light mode)
+- Consistent spacing using Tailwind scale
+- Use Lucide React icons (no emojis)
+
+### File Naming
+- Go files: snake_case.go
+- React components: PascalCase.tsx
+- TypeScript types: PascalCase in types.ts
+- Directories: lowercase, descriptive
+- Config/data files: kebab-case
+
+## Icon Guidelines
+- **Use Lucide React exclusively** - no emojis in UI
+- **Consistent sizing**: 16px for buttons, 32-64px for empty states
+- **Semantic mapping**: Icons should match their function
+- **Import organization**: Group icon imports at top of file
+
+### Common Icon Patterns
+- `Save` - Save actions
+- `Plus` - Add/create actions
+- `Copy` - Duplicate actions
+- `Trash2` - Delete actions
+- `Eye` - Preview/view actions
+- `Edit3` - Edit actions
+- `RefreshCw` - Refresh/reload actions
+- `Zap` - Activate/power actions
+- `Eraser` - Clear/reset actions
+
+## Performance Requirements
+
+### LED System Constraints
+- **Target Frame Rate**: 50 FPS (20ms per frame)
+- **Critical Path**: LED processing loop must maintain timing
+- **Monitoring Overhead**: Any metrics must be < 0.1ms impact per frame
+- **Memory Management**: Avoid allocations in hot paths
+
+### UI Performance
+- **LED Strip Rendering**: Efficient for 150+ elements
+- **Form Updates**: Debounced to prevent excessive re-renders
+- **Bundle Size**: Optimized with Tailwind purging
+- **API Calls**: Batched where possible
+
+## Build Process
+1. **Frontend**: `cd webserver/ui && pnpm build` (outputs to `ui/dist/`)
+2. **Backend**: `go build -o ddp-sender` (embeds `ui/dist/` files)
+3. **Helper**: `./build.sh` does both steps
+4. **Development**: `pnpm dev` for frontend hot reload
+
+## Configuration & Deployment
+- Main config in `config/config.go`
+- LED count, ports, directories defined as constants
+- Current mapping tracked in `config.CURRENT_MAPPING` variable
+- No external config files (compiled-in configuration)
+- Single binary output with embedded web assets
+- No external dependencies at runtime
+
+## Error Handling Patterns
+
+### Go
+```go
+if err != nil {
+    log.Printf("Error context: %v", err)
+    return err // or handle appropriately
+}
+```
+
+### React/TypeScript
+- Use error boundaries for component-level errors
+- Show user-friendly error messages
+- Provide recovery actions when possible
+- Loading states for async operations
+- Type-safe error handling with proper interfaces
+
+## Testing Strategy
+- **Manual Testing**: Real hardware validation with LED strips
+- **Cross-browser**: Modern browser compatibility (Chrome, Firefox, Safari, Edge)
+- **Performance Testing**: Frame rate validation during development
+- **API Testing**: Manual testing of all endpoints
+- **Form Validation**: Comprehensive input validation testing
+
+## Development Workflow
+1. **Frontend Development**: `cd webserver/ui && pnpm dev`
+2. **Backend Changes**: `go run main.go`
+3. **Production Build**: `./build.sh`
+4. **Hardware Testing**: LED hardware + REAPER + midisender.py
+5. **Performance Validation**: Monitor frame rates during testing
+
+## Common Implementation Patterns
+
+### Adding New Effect Type
+1. Add effect struct in `updater/effects/`
+2. Implement Effect interface methods
+3. Add case in `mapping.go` getNewEffect()
+4. Create effect options component in `ui/src/components/EffectOptions/`
+5. Update PresetEditor to include new effect
+6. Add proper TypeScript types
+7. Update documentation
+
+### Adding New API Endpoint
+1. Add handler function in `webserver/server.go`
+2. Register route in setupRoutes()
+3. Add TypeScript interface for request/response
+4. Add client-side API call in React
+5. Update error handling
+6. Test with hardware
+
+### Adding New UI Component
+1. Create directory in `src/components/ComponentName/`
+2. Create `ComponentName.tsx` with proper TypeScript types
+3. Use Lucide React icons (no emojis)
+4. Follow Tailwind CSS patterns
+5. Export from component index
+6. Import and use in parent components
+
+## Important Technical Notes
+- **LED Indexing**: Backend 0-based
+- **Range Logic**: Exclusive ranges - `first` to `last` (not including `last`)
+- **MIDI Notes**: 0-127 range, commonly use 30-127 for mappings
+- **Colors**: Always hex format (#rrggbb)
+- **File Paths**: Use relative paths, start with project root
+- **JSON Fields**: Use snake_case for effect options (Go struct tags)
+- **Performance**: LED refresh is real-time, keep effects efficient
+- **Simulation Accuracy**: Effect previews must match backend behavior exactly
+
+## Dependencies Management
+- **Go**: Use `go mod tidy` after adding dependencies
+- **React**: Use `pnpm` (not npm/yarn) for consistency
+- **Version Pinning**: Lock major versions for stability
+- **Icon Library**: Lucide React only, no other icon libraries
+
+## Troubleshooting
+- **Port Conflicts**: LED system uses 8080, 8081, 8090, 4048
+- **MIDI Issues**: Check UDP port 8090 availability
+- **LED Issues**: Verify DDP endpoint configuration
+- **Build Issues**: Ensure pnpm build completes before Go build
+- **Performance Issues**: Monitor frame rates, check for memory leaks
+- **Icon Issues**: Ensure Lucide React imports are correct
+
+## Future Development Areas
+
+### Near-term Enhancements
+- **System Monitoring**: Performance dashboard with minimal overhead
+- **Configuration UI**: System settings management
+- **Mapping Templates**: Reusable preset patterns
+
+### Long-term Considerations
+- **2D LED Layouts**: Matrix and custom shape support
+- **Effect Chains**: Multiple effects on same LED range
+- **MIDI Learn**: Click preset + hit MIDI key to assign
+- **Timeline Editor**: Sequence effects over time
+- **Multi-Universe**: Multiple LED controllers
+
+### Hardware Integration
+- **Connection Monitoring**: DDP packet success/failure tracking
+- **Multiple Controllers**: Support for multiple WLED devices
+
+---

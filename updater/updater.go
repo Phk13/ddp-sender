@@ -14,8 +14,9 @@ import (
 )
 
 type Updater struct {
-	array       led.LEDArray
-	sendChannel chan listener.MidiMessage
+	array        led.LEDArray
+	sendChannel  chan listener.MidiMessage
+	customMapper *custom.CustomMapper
 }
 
 func (u *Updater) Ticker(refreshRate time.Duration) {
@@ -59,8 +60,7 @@ func (u *Updater) Run() {
 	})
 
 	// Setup custom mapper listener (to receive custom presets from REAPER)
-	customMapper := custom.NewCustomMapper()
-	go customMapper.RunListener()
+	go u.customMapper.RunListener()
 
 	for message := range u.sendChannel {
 		switch message.Channel {
@@ -72,14 +72,21 @@ func (u *Updater) Run() {
 			mappings.DrumsMapping(u.array, message)
 		case 3:
 			// Dynamic mapping from REAPER
-			customMapper.MapMessage(u.array, message)
+			u.customMapper.MapMessage(u.array, message)
 		}
 	}
 }
 
 func NewUpdater(array led.LEDArray, sendChannel chan listener.MidiMessage) *Updater {
+	customMapper := custom.NewCustomMapper()
+	customMapper.SetLEDArray(array)
 	return &Updater{
-		array:       array,
-		sendChannel: sendChannel,
+		array:        array,
+		sendChannel:  sendChannel,
+		customMapper: customMapper,
 	}
+}
+
+func (u *Updater) GetCustomMapper() *custom.CustomMapper {
+	return u.customMapper
 }

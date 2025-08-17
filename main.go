@@ -12,6 +12,7 @@ import (
 	"ddp-sender/led"
 	"ddp-sender/listener"
 	"ddp-sender/updater"
+	"ddp-sender/webserver"
 )
 
 func main() {
@@ -31,6 +32,15 @@ func main() {
 
 	// Run LED ticker (dynamic effects)
 	go updater.Ticker(config.LED_REFRESH_RATE)
+
+	// Start web server
+	go func() {
+		webServer := webserver.NewWebServer(updater.GetCustomMapper())
+		err := webServer.Start()
+		if err != nil {
+			log.Printf("Web server error: %v", err)
+		}
+	}()
 
 	// DDP Sender
 	go func() {
