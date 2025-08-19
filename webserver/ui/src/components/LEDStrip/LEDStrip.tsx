@@ -1,5 +1,9 @@
 import React, { useState, useCallback, useRef } from "react";
-import { LEDStripProps, LEDRange } from "../../types";
+import { LEDStripProps } from "../../types";
+import LEDStripHeader from "./LEDStripHeader";
+import LEDVisualization from "./LEDVisualization";
+import SelectionInfo from "./SelectionInfo";
+import QuickSelectionTools from "./QuickSelectionTools";
 
 const LEDStrip: React.FC<LEDStripProps> = ({
   ledCount = 150,
@@ -162,197 +166,32 @@ const LEDStrip: React.FC<LEDStripProps> = ({
 
   return (
     <div className={`led-strip-container ${className}`}>
-      {/* LED Strip Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">
-          LED Strip ({ledCount} LEDs) - {activeSegments} Active Segments
-        </h3>
-        <div className="flex items-center gap-4 text-sm text-secondary">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-primary-600 opacity-80"></div>
-            <span>Mapped</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-400 ring-2 ring-blue-400"></div>
-            <span>Selected Preset</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-400 ring-2 ring-orange-400"></div>
-            <span>Editing Range</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-yellow-400 ring-2 ring-yellow-400"></div>
-            <span>User Selection</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-400 border-2 border-red-400"></div>
-            <span>Split Point</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-gray-600 opacity-30"></div>
-            <span>Unmapped</span>
-          </div>
-        </div>
-      </div>
+      <LEDStripHeader ledCount={ledCount} activeSegments={activeSegments} />
 
-      {/* LED Strip Visualization */}
-      <div
-        ref={stripRef}
-        className="led-strip bg-gray-900 border border-default rounded-lg p-6 mb-4 cursor-crosshair select-none"
+      <LEDVisualization
+        leds={leds}
+        splitPoint={splitPoint}
+        isSelecting={isSelecting}
+        stripRef={stripRef}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onClick={handleStripClick}
-      >
-        {/* Full Strip with better sizing */}
-        <div className="w-full">
-          <div className="text-sm text-muted mb-3">LED Strip Overview:</div>
-          <div className="bg-gray-800 rounded-lg p-4 w-full">
-            {/* LED grid - single line, auto-sized to fit */}
-            <div className="flex w-full justify-start" style={{ gap: "1px" }}>
-              {leds.map((ledIndex) => (
-                <div
-                  key={ledIndex}
-                  className={`
-                    led-element relative cursor-pointer transition-all duration-150
-                    ${isLEDSelected(ledIndex) ? "ring-2 ring-yellow-400" : ""}
-                    ${isLEDInSelectedPreset(ledIndex) ? "ring-2 ring-blue-400" : ""}
-                    ${isLEDInEditingRange(ledIndex) ? "ring-2 ring-orange-400" : ""}
-                    ${ledIndex === splitPoint || ledIndex === splitPoint + 1 ? "ring-2 ring-red-400" : ""}
-                    ${isSelecting ? "cursor-crosshair" : "cursor-pointer"}
-                  `}
-                  style={{
-                    flex: "1 1 0",
-                    aspectRatio: "1",
-                    maxWidth: "8px",
-                    minWidth: "2px",
-                    height: "auto",
-                    borderRadius: "50%",
-                    backgroundColor: isLEDSelected(ledIndex)
-                      ? "#fbbf24"
-                      : getLEDColor(ledIndex),
-                    opacity: getLEDOpacity(ledIndex),
-                    border: isLEDInSelectedPreset(ledIndex)
-                      ? "2px solid #60a5fa"
-                      : isLEDInEditingRange(ledIndex)
-                        ? "2px solid #fb923c"
-                        : ledIndex === splitPoint || ledIndex === splitPoint + 1
-                          ? "2px solid #f87171"
-                          : "1px solid rgba(255, 255, 255, 0.1)",
-                  }}
-                  onMouseDown={(e) => handleMouseDown(ledIndex, e)}
-                  onMouseEnter={() => handleMouseEnter(ledIndex)}
-                  title={`LED ${ledIndex}${ledIndex === splitPoint || ledIndex === splitPoint + 1 ? " (Split Point)" : ""}${isLEDInSelectedPreset(ledIndex) ? " (Selected Preset)" : ""}${isLEDInEditingRange(ledIndex) ? " (Editing)" : ""}`}
-                />
-              ))}
-            </div>
+        onStripClick={handleStripClick}
+        onMouseDown={handleMouseDown}
+        onMouseEnter={handleMouseEnter}
+        isLEDSelected={isLEDSelected}
+        isLEDInSelectedPreset={isLEDInSelectedPreset}
+        isLEDInEditingRange={isLEDInEditingRange}
+        getLEDColor={getLEDColor}
+        getLEDOpacity={getLEDOpacity}
+      />
 
-            {/* Range labels for easier navigation */}
-            <div className="mt-3 flex justify-between text-xs text-muted">
-              <span>0</span>
-              <span>25</span>
-              <span>50</span>
-              <span>74 | 75</span>
-              <span>100</span>
-              <span>125</span>
-              <span>149</span>
-            </div>
-          </div>
-        </div>
+      <SelectionInfo
+        isSelecting={isSelecting}
+        selectionStart={selectionStart}
+        selectionEnd={selectionEnd}
+        selectedRange={selectedRange}
+      />
 
-        {/* Selection Info */}
-        {(isSelecting || selectedRange) && (
-          <div className="mt-4 text-sm text-secondary">
-            {isSelecting && selectionStart !== null && selectionEnd !== null ? (
-              <span>
-                Selecting: LED {Math.min(selectionStart, selectionEnd)} -{" "}
-                {Math.max(selectionStart, selectionEnd)} (
-                {Math.abs(selectionEnd - selectionStart) + 1} LEDs)
-              </span>
-            ) : selectedRange ? (
-              <span>
-                Selected: LED {Math.min(...selectedRange.range)} -{" "}
-                {Math.max(...selectedRange.range)} ({selectedRange.range.length}{" "}
-                LEDs)
-              </span>
-            ) : null}
-          </div>
-        )}
-      </div>
-
-      {/* Quick Selection Tools */}
-      <div className="flex gap-2 text-sm flex-wrap">
-        <button
-          className="px-3 py-1 bg-gray-800 text-secondary rounded hover:bg-gray-700 hover:text-primary transition-colors"
-          onClick={() =>
-            onRangeSelect({
-              start: 0,
-              end: 75,
-              range: Array.from({ length: 75 }, (_, i) => i),
-              step: 1,
-            } as LEDRange)
-          }
-        >
-          Left Side [0, 75)
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-800 text-secondary rounded hover:bg-gray-700 hover:text-primary transition-colors"
-          onClick={() =>
-            onRangeSelect({
-              start: 75,
-              end: 150,
-              range: Array.from({ length: 75 }, (_, i) => i + 75),
-              step: 1,
-            } as LEDRange)
-          }
-        >
-          Right Side [75, 150)
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-800 text-secondary rounded hover:bg-gray-700 hover:text-primary transition-colors"
-          onClick={() =>
-            onRangeSelect({
-              start: 25,
-              end: 75,
-              range: Array.from({ length: 50 }, (_, i) => i + 25),
-              step: 1,
-            } as LEDRange)
-          }
-        >
-          Center-Left [25, 75)
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-800 text-secondary rounded hover:bg-gray-700 hover:text-primary transition-colors"
-          onClick={() =>
-            onRangeSelect({
-              start: 0,
-              end: 26,
-              range: Array.from({ length: 26 }, (_, i) => i),
-              step: 1,
-            } as LEDRange)
-          }
-        >
-          Edge-Left [0, 26)
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-800 text-secondary rounded hover:bg-gray-700 hover:text-primary transition-colors"
-          onClick={() =>
-            onRangeSelect({
-              start: 0,
-              end: 150,
-              range: Array.from({ length: 150 }, (_, i) => i),
-              step: 1,
-            } as LEDRange)
-          }
-        >
-          Select All [0, 150)
-        </button>
-        <button
-          className="px-3 py-1 bg-gray-800 text-secondary rounded hover:bg-gray-700 hover:text-primary transition-colors"
-          onClick={() => onRangeSelect(null)}
-        >
-          Clear
-        </button>
-      </div>
+      <QuickSelectionTools onRangeSelect={onRangeSelect} />
     </div>
   );
 };
